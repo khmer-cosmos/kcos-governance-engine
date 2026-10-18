@@ -30,9 +30,9 @@ function isCandidate(p) {
     '.github/workflows/kcos-read-gate.yml'
   ]);
   if (fixed.has(p)) return true;
-  const allowedDir = /^(docs|contracts|specs|architecture|ssot|schemas|governance|production)\//i.test(p);
+  const allowedDir = /^(docs|contracts|spec|specs|architecture|ssot|schema|schemas|governance|production|database|db|prisma|migrations|config|src|server|public|infra|infrastructure|deploy)\\//i.test(p);
   const relevantName = /(?:ssot|baseline|contract|spec|architecture|decision|charter|schema|registry|manifest|freeze|read-gate)/i.test(path.posix.basename(p));
-  return allowedDir && relevantName && /\.(md|mdx|yaml|yml|json|toml)$/i.test(p);
+  return allowedDir && relevantName && /\\.(md|mdx|yaml|yml|json|toml|sql|proto|ts|tsx|js|mjs|py|go)$/i.test(p);
 }
 function extractReadmeSSOTPaths(text) {
   const found = new Set();
@@ -40,7 +40,7 @@ function extractReadmeSSOTPaths(text) {
     if (!/(?:SSOT|Canonical SSOT|权威基线)\s*:/i.test(line)) continue;
     const match = line.match(/(?:SSOT|Canonical SSOT|权威基线)\s*:\s*(.+)$/i);
     if (!match) continue;
-    const value = match[1].trim().replaceAll(String.fromCharCode(96), '').replace(/^["']|["']$/g, '').replace(/[),;]+$/g, '');
+    const value = match[1].trim().replaceAll(String.fromCharCode(96), '').replace(/^[\"']|[\"']$/g, '').replace(/^[*:\\s]+/g, '').replace(/[),;*]+$/g, '').split(/\\s+/)[0];
     if (value && !value.includes('://') && !/\s/.test(value)) found.add(value.replace(/^\.\//, ''));
   }
   return [...found];
@@ -239,17 +239,27 @@ if (process.argv.includes('--self-test')) {
     if (!token) throw new Error('KCOS_AUDIT_TOKEN is required for a complete private-repository inventory; configure it as a repository Actions secret with read access to the declared scope.');
     const discovered = await discoverRepositories();
     for (const repo of discovered) repositoryReports.push(await scanRepository(repo));
+    const central = repositoryReports.find(r => r.repository.toLowerCase() === config.canonical_governance_ssot.repository.toLowerCase());
+    const centralDoc = central?.candidate_files_reviewed.find(f => f.path === config.canonical_governance_ssot.path)?.content || '';
+    const scopeMatch = centralDoc.match(/^scope:\s*\n((?:\s+-[^\n]+\n?)+)/m);
+    const declaredScope = scopeMatch ? [...scopeMatch[1].matchAll(/^\s+-\s*(.+?)\s*$/gm)].map(m => m[1]) : [];
     const outsideScopeConsumers = repositoryReports.filter(r => {
       const workflow = r.candidate_files_reviewed.find(f => f.path === '.github/workflows/kcos-read-gate.yml');
       const content = workflow?.content || '';
+      const projectName = r.repository.split('/').pop();
       return r.repository.toLowerCase() !== config.canonical_governance_ssot.repository.toLowerCase() &&
         /(?:ahlis0201-ui|khmer-cosmos)\/kcos-governance-engine/i.test(content) &&
-        /KCOS_SSOT_SHA:\s*3d8db073b2f05aeca681cca4fbf00f27fb8597fd/.test(content);
+        /KCOS_SSOT_SHA:\s*3d8db073b2f05aeca681cca4fbf00f27fb8597fd/.test(content) &&
+        !declaredScope.some(scope => scope.toLowerCase() === projectName.toLowerCase());
     }).map(r => r.repository);
-    if (outsideScopeConsumers.length) addFinding('CENTRAL_SSOT_SCOPE_REVIEW_REQUIRED', 'REVIEW',
+    if (!declaredScope.length) addFinding('CENTRAL_SSOT_SCOPE_SOURCE_UNVERIFIED', 'BLOCKED',
+      config.canonical_governance_ssot.repository, config.canonical_governance_ssot.path,
+      'Could not extract the declared scope from the actual frozen SSOT content; do not infer scope from memory or a hardcoded value.',
+      { central_document_content_available: Boolean(centralDoc) });
+    else if (outsideScopeConsumers.length) addFinding('CENTRAL_SSOT_SCOPE_REVIEW_REQUIRED', 'REVIEW',
       config.canonical_governance_ssot.repository, config.canonical_governance_ssot.path,
       'The frozen document declares a limited scope, while the same baseline is pinned by additional repositories. Confirm formal scope authority; do not edit frozen V1.0 in place.',
-      { declared_scope_read_from_source: 'KCOS, KCHAT, SuperAgent', downstream_consumers: outsideScopeConsumers });
+      { declared_scope_read_from_source: declaredScope, downstream_consumers: outsideScopeConsumers });
     const report = {
       inventory_id: config.inventory_id, generated_at: new Date().toISOString(),
       scope: { organization: config.organization, additional_owners: config.additional_owners || [] },
