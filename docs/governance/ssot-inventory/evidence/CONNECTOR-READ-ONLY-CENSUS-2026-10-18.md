@@ -167,3 +167,10 @@ Commit `143eb47024b566e09626ac88f779d60b5c2f299a` broadens candidate discovery t
 - Offline self-test assertions were added for a nested package README and a product PRD.
 
 Read-back verified the code and assertions at blob `862f72a4a567cffbbd4fc7c0709a33930b6f2607`. This is code-presence evidence only; the self-test has not yet been independently observed executing for this latest commit. Broader discovery may increase candidate counts; if configured review caps are exceeded, the scan now reports BLOCKED rather than claiming complete coverage.
+
+
+## 12. Candidate blob transport errors now block completeness — 2026-10-19
+
+Commit `255f7c30fed52bd0084a068a55d9677ef8b55dff` routes candidate blob-fetch exceptions through the same `recordUnreadableCandidate` handler used for oversized/unsupported candidate blobs. This ensures API transport/permission errors produce a scan-wide error and `CANDIDATE_CONTENT_UNREADABLE` BLOCKED finding instead of only a generic per-repository error.
+
+Read-back confirmed the handler call at blob `7b793ec977cb2f5f3df0b874cfee7b27e2dea171`. The connector returned no workflow run and no combined commit status for this commit; the regression test and end-to-end scan are still awaiting execution evidence.
