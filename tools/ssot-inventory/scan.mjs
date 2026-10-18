@@ -13,6 +13,7 @@ const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
 const findings = [];
 const repositoryReports = [];
 const scanErrors = [];
+let frozenBaselineVerified = false;
 
 function addFinding(code, severity, repository, filePath, detail, evidence = {}) {
   const key = [code, repository || '', filePath || '', detail].join('|');
@@ -243,6 +244,23 @@ if (process.argv.includes('--self-test')) {
     const centralDoc = central?.candidate_files_reviewed.find(f => f.path === config.canonical_governance_ssot.path)?.content || '';
     const scopeMatch = centralDoc.match(/^scope:\s*\n((?:\s+-[^\n]+\n?)+)/m);
     const declaredScope = scopeMatch ? [...scopeMatch[1].matchAll(/^\s+-\s*(.+?)\s*$/gm)].map(m => m[1]) : [];
+    try {
+      const pinnedPath = config.canonical_governance_ssot.path.split('/').map(encodeURIComponent).join('/');
+      const pinned = await api('/repos/' + config.canonical_governance_ssot.repository + '/contents/' + pinnedPath +
+        '?ref=' + encodeURIComponent(config.canonical_governance_ssot.frozen_commit_sha));
+      if (pinned.sha !== config.canonical_governance_ssot.blob_sha) {
+        addFinding('CENTRAL_FROZEN_SSOT_BLOB_MISMATCH', 'HIGH', config.canonical_governance_ssot.repository,
+          config.canonical_governance_ssot.path, 'The frozen commit resolves to a different blob SHA than the scope contract pins.',
+          { expected_blob_sha: config.canonical_governance_ssot.blob_sha, actual_blob_sha: pinned.sha, frozen_commit_sha: config.canonical_governance_ssot.frozen_commit_sha });
+      } else {
+        frozenBaselineVerified = true;
+      }
+    } catch (error) {
+      addFinding('CENTRAL_FROZEN_SSOT_SOURCE_UNVERIFIED', 'BLOCKED', config.canonical_governance_ssot.repository,
+        config.canonical_governance_ssot.path, 'Could not verify the pinned frozen SSOT commit/blob through the GitHub Contents API.',
+        { frozen_commit_sha: config.canonical_governance_ssot.frozen_commit_sha, error: error.message });
+      scanErrors.push('Pinned central SSOT verification: ' + error.message);
+    }
     const outsideScopeConsumers = repositoryReports.filter(r => {
       const workflow = r.candidate_files_reviewed.find(f => f.path === '.github/workflows/kcos-read-gate.yml');
       const content = workflow?.content || '';
@@ -264,6 +282,7 @@ if (process.argv.includes('--self-test')) {
       inventory_id: config.inventory_id, generated_at: new Date().toISOString(),
       scope: { organization: config.organization, additional_owners: config.additional_owners || [] },
       repository_count: repositoryReports.length, complete: scanErrors.length === 0 && repositoryReports.length > 0,
+      central_frozen_ssot_blob_verified: frozenBaselineVerified,
       repositories: repositoryReports, findings, scan_errors: scanErrors
     };
     fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
@@ -276,7 +295,7 @@ if (process.argv.includes('--self-test')) {
     const report = {
       inventory_id: config.inventory_id, generated_at: new Date().toISOString(),
       scope: { organization: config.organization, additional_owners: config.additional_owners || [] },
-      repository_count: repositoryReports.length, complete: false, repositories: repositoryReports,
+      repository_count: repositoryReports.length, complete: false, central_frozen_ssot_blob_verified: frozenBaselineVerified, repositories: repositoryReports,
       findings: [...findings, { code: 'INVENTORY_RUN_FATAL', severity: 'BLOCKED', repository: null, path: null, detail: error.message, evidence: {} }],
       scan_errors: [...scanErrors, error.message]
     };
