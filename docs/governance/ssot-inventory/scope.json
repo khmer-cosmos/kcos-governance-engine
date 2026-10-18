@@ -1,0 +1,36 @@
+{
+  "inventory_id": "KCOS-SSOT-INVENTORY-001",
+  "scope_policy": "Discover all repositories in the khmer-cosmos organization and all repositories owned by ahlis0201-ui. Treat these as candidate ecosystem scope; do not silently exclude repositories based on names.",
+  "organization": "khmer-cosmos",
+  "additional_owners": [
+    "ahlis0201-ui"
+  ],
+  "canonical_governance_ssot": {
+    "repository": "khmer-cosmos/kcos-governance-engine",
+    "path": "docs/governance/document-lifecycle/KCOS-DOCUMENT-LIFECYCLE-GOVERNANCE-SSOT-V1.0.md",
+    "frozen_commit_sha": "3d8db073b2f05aeca681cca4fbf00f27fb8597fd",
+    "blob_sha": "e8c810b521e66f31561b85e6790b6a940c1bbeea",
+    "version": "V1.0",
+    "status": "FROZEN"
+  },
+  "canonical_read_gate": {
+    "repository": "khmer-cosmos/kcos-governance-engine",
+    "path": "tools/kcos-read-gate/check-read-gate.mjs",
+    "pinned_revision_seen_in_existing_workflows": "68de971798758e9b1591b11e196bd531646a08f9"
+  },
+  "governance_scaffold_paths": [
+    "README.md",
+    "AGENTS.md",
+    ".github/workflows/kcos-read-gate.yml",
+    "docs/governance/lifecycle/REPOSITORY-END-STATE-001.md",
+    "docs/governance/REPOSITORY-END-STATE-001.md",
+    "docs/governance/FACTORY-ZONE-001.md",
+    "docs/governance/FACTORY-ENDPOINT-001.md",
+    "docs/governance/REPOSITORY-DECISION-BOUNDARY-001.md",
+    "docs/governance/read-gate/KCOS-READ-GATE-001.md",
+    "docs/governance/read-gate/READ-RECEIPT.md",
+    "docs/governance/execution-infrastructure/EXECUTION-MATERIAL-MANIFEST.md"
+  ],
+  "candidate_file_limit_per_repository": 80,
+  "max_blob_bytes_to_read": 500000
+}
