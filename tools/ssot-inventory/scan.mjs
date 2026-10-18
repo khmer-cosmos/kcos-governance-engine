@@ -128,6 +128,8 @@ async function scanRepository(repo) {
     if (tree.truncated) {
       item.errors.push('Git tree is truncated; candidate discovery is incomplete.');
       scanErrors.push(repo.full_name + ': truncated Git tree');
+      addFinding('GIT_TREE_TRUNCATED', 'BLOCKED', repo.full_name, null,
+        'GitHub returned a truncated recursive tree; candidate discovery cannot be treated as complete.', { head_sha: item.head_sha, tree_sha: tree.sha });
     }
     const blobs = (tree.tree || []).filter(e => e.type === 'blob');
     const byPath = new Map(blobs.map(e => [e.path, e]));
@@ -141,6 +143,10 @@ async function scanRepository(repo) {
     if (candidates.length > selected.length) {
       item.errors.push('Candidate content review capped at ' + limit + ' of ' + candidates.length + ' files.');
       scanErrors.push(repo.full_name + ': candidate review cap reached');
+      addFinding('CANDIDATE_REVIEW_CAP_REACHED', 'BLOCKED', repo.full_name, null,
+        'Candidate review limit prevented inspection of every discovered candidate file.', {
+          discovered: candidates.length, reviewed_limit: limit, head_sha: item.head_sha
+        });
     }
     const contents = new Map();
     for (const entry of selected) {
@@ -148,7 +154,14 @@ async function scanRepository(repo) {
         const result = await readBlob(repo, entry);
         item.candidate_files_reviewed.push({ path: entry.path, blob_sha: entry.sha, size: entry.size ?? null, ...result });
         if (result.content !== undefined) contents.set(entry.path, result.content);
-        else item.errors.push(entry.path + ': ' + result.reason);
+        else {
+          item.errors.push(entry.path + ': ' + result.reason);
+          scanErrors.push(repo.full_name + '/' + entry.path + ': candidate content not inspected (' + result.reason + ')');
+          addFinding('CANDIDATE_CONTENT_UNREADABLE', 'BLOCKED', repo.full_name, entry.path,
+            'A discovered candidate file was not inspected; scan completeness must remain false.', {
+              reason: result.reason, blob_sha: entry.sha, size: entry.size ?? null, head_sha: item.head_sha
+            });
+        }
       } catch (error) {
         item.errors.push(entry.path + ': ' + error.message);
         scanErrors.push(repo.full_name + '/' + entry.path + ': ' + error.message);
