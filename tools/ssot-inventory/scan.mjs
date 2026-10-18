@@ -236,6 +236,7 @@ if (process.argv.includes('--self-test')) {
   selfTest();
 } else {
   try {
+    if (!token) throw new Error('KCOS_AUDIT_TOKEN is required for a complete private-repository inventory; configure it as a repository Actions secret with read access to the declared scope.');
     const discovered = await discoverRepositories();
     for (const repo of discovered) repositoryReports.push(await scanRepository(repo));
     const outsideScopeConsumers = repositoryReports.filter(r => {
