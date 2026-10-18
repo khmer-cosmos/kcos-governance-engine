@@ -146,3 +146,13 @@ Correction committed to the draft branch:
 - Post-write read-back confirmed all three finding markers and the scan-wide error path are present.
 
 This is source read-back evidence, not runtime acceptance. The offline self-test and full scheduled/manual scan still require execution evidence; do not infer a workflow PASS from the commit alone.
+
+
+## 10. Regression self-test added — 2026-10-19
+
+Commit `e4bc26585d082b82881ee946427f44f0683976b0` extracts the unreadable-candidate handling into `recordUnreadableCandidate` and adds offline assertions that an oversized/unreadable candidate:
+- records a repository-local error;
+- increments the scan-wide error list (therefore prevents `complete: true`);
+- emits a `CANDIDATE_CONTENT_UNREADABLE` BLOCKED finding.
+
+Read-back verified the test code is present at blob `2afce65be44ab2bef4e788a2bb6f433a1feb1a13`. The connector returned no workflow runs or commit status checks for this latest commit at the time of this read-back; therefore the new test has not been claimed as executed. PR #2 remains Draft and unmerged.
