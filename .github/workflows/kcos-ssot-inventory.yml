@@ -1,0 +1,115 @@
+name: KCOS SSOT Inventory
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '15 1 * * *'
+  pull_request:
+    paths:
+      - 'tools/ssot-inventory/**'
+      - 'docs/governance/ssot-inventory/**'
+      - '.github/workflows/kcos-ssot-inventory.yml'
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: kcos-ssot-inventory-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  self-test:
+    name: Inventory scanner self-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check syntax
+        run: node --check tools/ssot-inventory/scan.mjs
+      - name: Run offline self-test
+        run: node tools/ssot-inventory/scan.mjs --self-test
+
+  scan:
+    name: Discover and inspect SSOT evidence
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: self-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run inventory scan
+        id: inventory
+        continue-on-error: true
+        env:
+          KCOS_AUDIT_TOKEN: ${{ secrets.KCOS_AUDIT_TOKEN }}
+          REPORT_PATH: ${{ runner.temp }}/kcos-ssot-inventory.json
+        run: node tools/ssot-inventory/scan.mjs
+      - name: Upload evidence report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kcos-ssot-inventory-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/kcos-ssot-inventory.json
+            ${{ runner.temp }}/kcos-ssot-inventory.md
+          if-no-files-found: error
+          retention-days: 90
+      - name: Create or update durable follow-up issue
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          REPORT_PATH: ${{ runner.temp }}/kcos-ssot-inventory.json
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync(process.env.REPORT_PATH, 'utf8'));
+            const title = 'KCOS SSOT Inventory — Active Findings';
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const response = await github.rest.issues.listForRepo({ owner, repo, state: 'open', per_page: 100 });
+            const existing = response.data.find(x => !x.pull_request && x.title === title);
+            const findings = (report.findings || []).slice(0, 100).map(f =>
+              '- **' + f.severity + ' / ' + f.code + '** — ' + (f.repository || 'ecosystem') +
+              (f.path ? ' / ' + f.path : '') + ': ' + f.detail
+            );
+            const errors = (report.scan_errors || []).slice(0, 50).map(x => '- ' + x);
+            const body = [
+              '## Current automated evidence',
+              '',
+              '- Inventory: ' + report.inventory_id,
+              '- Generated: ' + report.generated_at,
+              '- Repositories discovered: ' + report.repository_count,
+              '- Complete: **' + report.complete + '**',
+              '- Findings: **' + (report.findings || []).length + '**',
+              '- Run: ' + process.env.RUN_URL,
+              '- Evidence report: download the kcos-ssot-inventory artifact from the run.',
+              '',
+              '> Automated candidates are not authoritative declarations. Do not mark an SSOT VERIFIED without human review of scope, ownership, version, status, lineage and actual content.',
+              '',
+              '## Findings',
+              '',
+              findings.length ? findings.join('\n') : 'No findings detected.',
+              '',
+              '## Scan errors',
+              '',
+              errors.length ? errors.join('\n') : 'No scan errors.',
+              '',
+              '## Ownership',
+              '',
+              'Accountable owner is not inferred by automation. Assign this issue to the designated KCOS governance owner; keep it open while findings or scope gaps remain.'
+            ].join('\n');
+            if ((report.findings || []).length || !report.complete) {
+              if (existing) await github.rest.issues.update({ owner, repo, issue_number: existing.number, body });
+              else await github.rest.issues.create({ owner, repo, title, body });
+            } else if (existing) {
+              await github.rest.issues.createComment({ owner, repo, issue_number: existing.number, body: 'Automated inventory currently reports complete with no findings. Closing this tracking issue; the scheduled scan remains active. Run: ' + process.env.RUN_URL });
+              await github.rest.issues.update({ owner, repo, issue_number: existing.number, state: 'closed', body });
+            }
+      - name: Report unresolved blocking findings
+        if: always()
+        env:
+          REPORT_PATH: ${{ runner.temp }}/kcos-ssot-inventory.json
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; const r=JSON.parse(fs.readFileSync(process.env.REPORT_PATH,'utf8')); const blockers=(r.findings||[]).filter(f=>['HIGH','BLOCKED'].includes(f.severity)); if(!r.complete || blockers.length) { console.error('SSOT inventory incomplete or blocking findings exist; inspect artifact and tracking issue.'); process.exit(1); } console.log('Inventory scan completed; review findings remain tracked in the active issue.');"
