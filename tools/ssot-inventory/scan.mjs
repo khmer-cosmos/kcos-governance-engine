@@ -39,15 +39,16 @@ function isScaffold(p) {
 }
 function isCandidate(p) {
   const fixed = new Set([
-    'README.md', 'AGENTS.md',
     'docs/governance/read-gate/KCOS-READ-GATE-001.md',
     'docs/governance/read-gate/READ-RECEIPT.md',
     'docs/governance/execution-infrastructure/EXECUTION-MATERIAL-MANIFEST.md',
     '.github/workflows/kcos-read-gate.yml'
   ]);
   if (fixed.has(p)) return true;
-  const allowedDir = /^(docs|contracts|spec|specs|architecture|ssot|schema|schemas|governance|production|database|db|prisma|migrations|config|src|server|public|infra|infrastructure|deploy)\//i.test(p);
-  const relevantName = /(?:ssot|baseline|contract|spec|architecture|decision|charter|schema|registry|manifest|freeze|read-gate)/i.test(path.posix.basename(p));
+  const base = path.posix.basename(p);
+  if (/^(README|AGENTS)\.md$/i.test(base)) return true;
+  const allowedDir = /^(docs|contracts|spec|specs|architecture|ssot|schema|schemas|governance|production|database|db|prisma|migrations|config|src|server|public|infra|infrastructure|deploy|product|requirements|design)\//i.test(p);
+  const relevantName = /(?:ssot|baseline|contract|spec|architecture|decision|charter|schema|registry|manifest|freeze|read-gate|prd|requirement|product|design|data-model|data-model|erd|api|domain|policy|standard|blueprint|adr)/i.test(base);
   return allowedDir && relevantName && /\.(md|mdx|yaml|yml|json|toml|sql|proto|ts|tsx|js|mjs|py|go)$/i.test(p);
 }
 function extractReadmeSSOTPaths(text) {
@@ -169,13 +170,17 @@ async function scanRepository(repo) {
       }
     }
     const pathSet = new Set(blobs.map(e => e.path));
-    const readme = contents.get('README.md') || '';
-    item.readme_ssot_references = extractReadmeSSOTPaths(readme).map(ref => ({ path: ref, exists: pathSet.has(ref), is_governance_scaffold: isScaffold(ref) }));
+    const readmePaths = [...contents.keys()].filter(p => /^(README|AGENTS)\.md$/i.test(path.posix.basename(p)));
+    item.readme_ssot_references = readmePaths.flatMap(sourcePath =>
+      extractReadmeSSOTPaths(contents.get(sourcePath) || '').map(ref => ({
+        source_path: sourcePath, path: ref, exists: pathSet.has(ref), is_governance_scaffold: isScaffold(ref)
+      }))
+    );
     for (const ref of item.readme_ssot_references) {
-      if (!ref.exists) addFinding('BROKEN_README_SSOT_REFERENCE', 'HIGH', repo.full_name, 'README.md',
-        'README declares an SSOT path absent from the default-branch tree.', { reference: ref.path, head_sha: item.head_sha });
-      if (ref.is_governance_scaffold) addFinding('GOVERNANCE_ENTRYPOINT_NOT_DOMAIN_PROOF', 'REVIEW', repo.full_name, 'README.md',
-        'README points to a governance lifecycle entrypoint; this does not prove project/domain SSOT coverage.', { reference: ref.path, head_sha: item.head_sha });
+      if (!ref.exists) addFinding('BROKEN_README_SSOT_REFERENCE', 'HIGH', repo.full_name, ref.source_path,
+        'Repository guidance file declares an SSOT path absent from the default-branch tree.', { reference: ref.path, head_sha: item.head_sha });
+      if (ref.is_governance_scaffold) addFinding('GOVERNANCE_ENTRYPOINT_NOT_DOMAIN_PROOF', 'REVIEW', repo.full_name, ref.source_path,
+        'Repository guidance file points to a governance lifecycle entrypoint; this does not prove project/domain SSOT coverage.', { reference: ref.path, head_sha: item.head_sha });
     }
     item.read_gate.spec = pathSet.has('docs/governance/read-gate/KCOS-READ-GATE-001.md');
     item.read_gate.receipt = pathSet.has('docs/governance/read-gate/READ-RECEIPT.md');
@@ -252,6 +257,8 @@ function selfTest() {
   assert.throws(() => requireCommitTreeSha({ sha: '0123456789abcdef0123456789abcdef01234567' }), /commit\.tree\.sha/);
   assert.equal(isScaffold('docs/governance/lifecycle/REPOSITORY-END-STATE-001.md'), true);
   assert.equal(isCandidate('docs/contracts/ACCOUNT-CONTRACT-001.md'), true);
+  assert.equal(isCandidate('packages/api/README.md'), true);
+  assert.equal(isCandidate('docs/product/PRODUCT-PRD.md'), true);
   assert.equal(isCandidate('src/index.ts'), false);
   assert.deepEqual(extractReadmeSSOTPaths('SSOT: ' + String.fromCharCode(96) + 'docs/contracts/IDENTITY-001.md' + String.fromCharCode(96)), ['docs/contracts/IDENTITY-001.md']);
   assert.equal(hasDomainSignal('docs/contracts/IDENTITY-001.md', 'Status: FROZEN'), true);
