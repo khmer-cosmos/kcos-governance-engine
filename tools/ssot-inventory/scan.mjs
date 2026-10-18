@@ -19,6 +19,13 @@ function addFinding(code, severity, repository, filePath, detail, evidence = {})
   const key = [code, repository || '', filePath || '', detail].join('|');
   if (!findings.some(x => x.key === key)) findings.push({ key, code, severity, repository: repository || null, path: filePath || null, detail, evidence });
 }
+function requireCommitTreeSha(commit) {
+  const sha = commit?.commit?.tree?.sha;
+  if (typeof sha !== 'string' || !/^[0-9a-f]{40}$/i.test(sha)) {
+    throw new Error('Default-branch commit response did not include a valid commit.tree.sha; refusing to guess a tree identifier.');
+  }
+  return sha;
+}
 function isScaffold(p) {
   return (config.governance_scaffold_paths || []).includes(p);
 }
@@ -114,8 +121,7 @@ async function scanRepository(repo) {
   try {
     const commit = await api('/repos/' + repo.full_name + '/commits/' + encodeURIComponent(repo.default_branch));
     item.head_sha = commit.sha;
-    const commitTreeSha = commit?.commit?.tree?.sha;
-    if (!commitTreeSha) throw new Error('Default-branch commit response did not include commit.tree.sha; refusing to guess a tree identifier.');
+    const commitTreeSha = requireCommitTreeSha(commit);
     const tree = await api('/repos/' + repo.full_name + '/git/trees/' + encodeURIComponent(commitTreeSha) + '?recursive=1');
     item.tree_sha = tree.sha;
     item.tree_truncated = Boolean(tree.truncated);
@@ -228,6 +234,8 @@ function renderMarkdown(report) {
   return lines.join('\n') + '\n';
 }
 function selfTest() {
+  assert.equal(requireCommitTreeSha({ commit: { tree: { sha: '0123456789abcdef0123456789abcdef01234567' } } }), '0123456789abcdef0123456789abcdef01234567');
+  assert.throws(() => requireCommitTreeSha({ sha: '0123456789abcdef0123456789abcdef01234567' }), /commit\.tree\.sha/);
   assert.equal(isScaffold('docs/governance/lifecycle/REPOSITORY-END-STATE-001.md'), true);
   assert.equal(isCandidate('docs/contracts/ACCOUNT-CONTRACT-001.md'), true);
   assert.equal(isCandidate('src/index.ts'), false);
