@@ -120,3 +120,14 @@ This evidence does **not** claim:
 
 ---
 This file is evidence attached to the draft implementation PR. It is not an SSOT, does not change frozen baselines, and is not a substitute for the automated full scan.
+
+
+## 8. Scanner implementation defect found during independent code review
+
+A review of `tools/ssot-inventory/scan.mjs` found that recursive tree retrieval had been constructed with the default branch name as the Git Trees API identifier. The Git Trees endpoint expects a tree SHA; branch names should not be assumed to resolve as tree identifiers.
+
+Correction committed to the draft branch:
+- Commit: `ca76d3279c8ca9566d1a407ab8bbc75c3b3b0168` — use the default-branch commit's `commit.tree.sha`.
+- Commit: `e6e74fb7c5fe047282bf0810b03d12df1a827f88` — validate the tree SHA shape and add self-test coverage for valid and missing tree SHA data.
+
+This was a potentially scan-blocking defect; it is now corrected in the candidate implementation. The corresponding GitHub Actions PR checks have been queued/in progress, and the full scheduled/manual scan has still not been demonstrated. Do not mark the inventory workflow operationally accepted until the new self-test passes and a complete scan produces artifacts and updates the tracking issue.
