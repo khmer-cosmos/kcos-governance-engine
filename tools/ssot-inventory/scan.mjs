@@ -30,9 +30,9 @@ function isCandidate(p) {
     '.github/workflows/kcos-read-gate.yml'
   ]);
   if (fixed.has(p)) return true;
-  const allowedDir = /^(docs|contracts|spec|specs|architecture|ssot|schema|schemas|governance|production|database|db|prisma|migrations|config|src|server|public|infra|infrastructure|deploy)\\//i.test(p);
+  const allowedDir = /^(docs|contracts|spec|specs|architecture|ssot|schema|schemas|governance|production|database|db|prisma|migrations|config|src|server|public|infra|infrastructure|deploy)\//i.test(p);
   const relevantName = /(?:ssot|baseline|contract|spec|architecture|decision|charter|schema|registry|manifest|freeze|read-gate)/i.test(path.posix.basename(p));
-  return allowedDir && relevantName && /\\.(md|mdx|yaml|yml|json|toml|sql|proto|ts|tsx|js|mjs|py|go)$/i.test(p);
+  return allowedDir && relevantName && /\.(md|mdx|yaml|yml|json|toml|sql|proto|ts|tsx|js|mjs|py|go)$/i.test(p);
 }
 function extractReadmeSSOTPaths(text) {
   const found = new Set();
@@ -40,7 +40,7 @@ function extractReadmeSSOTPaths(text) {
     if (!/(?:SSOT|Canonical SSOT|权威基线)\s*:/i.test(line)) continue;
     const match = line.match(/(?:SSOT|Canonical SSOT|权威基线)\s*:\s*(.+)$/i);
     if (!match) continue;
-    const value = match[1].trim().replaceAll(String.fromCharCode(96), '').replace(/^[\"']|[\"']$/g, '').replace(/^[*:\\s]+/g, '').replace(/[),;*]+$/g, '').split(/\\s+/)[0];
+    const value = match[1].trim().replaceAll(String.fromCharCode(96), '').replace(/^["']|["']$/g, '').replace(/^[*:\s]+/g, '').replace(/[),;*]+$/g, '').split(/\s+/)[0];
     if (value && !value.includes('://') && !/\s/.test(value)) found.add(value.replace(/^\.\//, ''));
   }
   return [...found];
