@@ -114,7 +114,9 @@ async function scanRepository(repo) {
   try {
     const commit = await api('/repos/' + repo.full_name + '/commits/' + encodeURIComponent(repo.default_branch));
     item.head_sha = commit.sha;
-    const tree = await api('/repos/' + repo.full_name + '/git/trees/' + encodeURIComponent(repo.default_branch) + '?recursive=1');
+    const commitTreeSha = commit?.commit?.tree?.sha;
+    if (!commitTreeSha) throw new Error('Default-branch commit response did not include commit.tree.sha; refusing to guess a tree identifier.');
+    const tree = await api('/repos/' + repo.full_name + '/git/trees/' + encodeURIComponent(commitTreeSha) + '?recursive=1');
     item.tree_sha = tree.sha;
     item.tree_truncated = Boolean(tree.truncated);
     if (tree.truncated) {
