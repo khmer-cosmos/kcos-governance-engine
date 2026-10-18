@@ -19,6 +19,14 @@ function addFinding(code, severity, repository, filePath, detail, evidence = {})
   const key = [code, repository || '', filePath || '', detail].join('|');
   if (!findings.some(x => x.key === key)) findings.push({ key, code, severity, repository: repository || null, path: filePath || null, detail, evidence });
 }
+function recordUnreadableCandidate(repo, entry, result, item) {
+  item.errors.push(entry.path + ': ' + result.reason);
+  scanErrors.push(repo.full_name + '/' + entry.path + ': candidate content not inspected (' + result.reason + ')');
+  addFinding('CANDIDATE_CONTENT_UNREADABLE', 'BLOCKED', repo.full_name, entry.path,
+    'A discovered candidate file was not inspected; scan completeness must remain false.', {
+      reason: result.reason, blob_sha: entry.sha, size: entry.size ?? null, head_sha: item.head_sha
+    });
+}
 function requireCommitTreeSha(commit) {
   const sha = commit?.commit?.tree?.sha;
   if (typeof sha !== 'string' || !/^[0-9a-f]{40}$/i.test(sha)) {
@@ -154,14 +162,7 @@ async function scanRepository(repo) {
         const result = await readBlob(repo, entry);
         item.candidate_files_reviewed.push({ path: entry.path, blob_sha: entry.sha, size: entry.size ?? null, ...result });
         if (result.content !== undefined) contents.set(entry.path, result.content);
-        else {
-          item.errors.push(entry.path + ': ' + result.reason);
-          scanErrors.push(repo.full_name + '/' + entry.path + ': candidate content not inspected (' + result.reason + ')');
-          addFinding('CANDIDATE_CONTENT_UNREADABLE', 'BLOCKED', repo.full_name, entry.path,
-            'A discovered candidate file was not inspected; scan completeness must remain false.', {
-              reason: result.reason, blob_sha: entry.sha, size: entry.size ?? null, head_sha: item.head_sha
-            });
-        }
+        else recordUnreadableCandidate(repo, entry, result, item);
       } catch (error) {
         item.errors.push(entry.path + ': ' + error.message);
         scanErrors.push(repo.full_name + '/' + entry.path + ': ' + error.message);
@@ -254,6 +255,17 @@ function selfTest() {
   assert.equal(isCandidate('src/index.ts'), false);
   assert.deepEqual(extractReadmeSSOTPaths('SSOT: ' + String.fromCharCode(96) + 'docs/contracts/IDENTITY-001.md' + String.fromCharCode(96)), ['docs/contracts/IDENTITY-001.md']);
   assert.equal(hasDomainSignal('docs/contracts/IDENTITY-001.md', 'Status: FROZEN'), true);
+  const beforeScanErrors = scanErrors.length;
+  const fixture = { errors: [], head_sha: '0123456789abcdef0123456789abcdef01234567' };
+  recordUnreadableCandidate(
+    { full_name: 'self-test/repository' },
+    { path: 'docs/SSOT.md', sha: 'abcdef0123456789abcdef0123456789abcdef01', size: 600001 },
+    { reason: 'blob exceeds configured read limit' },
+    fixture
+  );
+  assert.equal(fixture.errors.length, 1);
+  assert.equal(scanErrors.length, beforeScanErrors + 1);
+  assert.equal(findings.some(x => x.code === 'CANDIDATE_CONTENT_UNREADABLE' && x.repository === 'self-test/repository'), true);
   console.log('KCOS-SSOT-INVENTORY-001 self-test PASS');
 }
 if (process.argv.includes('--self-test')) {
