@@ -165,8 +165,7 @@ async function scanRepository(repo) {
         if (result.content !== undefined) contents.set(entry.path, result.content);
         else recordUnreadableCandidate(repo, entry, result, item);
       } catch (error) {
-        item.errors.push(entry.path + ': ' + error.message);
-        scanErrors.push(repo.full_name + '/' + entry.path + ': ' + error.message);
+        recordUnreadableCandidate(repo, entry, { reason: 'blob fetch failed: ' + error.message }, item);
       }
     }
     const pathSet = new Set(blobs.map(e => e.path));
