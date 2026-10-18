@@ -156,3 +156,14 @@ Commit `e4bc26585d082b82881ee946427f44f0683976b0` extracts the unreadable-candid
 - emits a `CANDIDATE_CONTENT_UNREADABLE` BLOCKED finding.
 
 Read-back verified the test code is present at blob `2afce65be44ab2bef4e788a2bb6f433a1feb1a13`. The connector returned no workflow runs or commit status checks for this latest commit at the time of this read-back; therefore the new test has not been claimed as executed. PR #2 remains Draft and unmerged.
+
+
+## 11. Broader candidate discovery — 2026-10-19
+
+Commit `143eb47024b566e09626ac88f779d60b5c2f299a` broadens candidate discovery to reduce false negatives in nested project documentation:
+- Any nested `README.md` or `AGENTS.md` is now a candidate, not only root-level guidance files.
+- Candidate filename signals now include PRD, requirements, product, design, data model, ERD, API, domain, policy, standard, blueprint and ADR terms in addition to SSOT/baseline/contract/schema signals.
+- SSOT path references are extracted from all reviewed README/AGENTS guidance files and findings identify the declaring source path.
+- Offline self-test assertions were added for a nested package README and a product PRD.
+
+Read-back verified the code and assertions at blob `862f72a4a567cffbbd4fc7c0709a33930b6f2607`. This is code-presence evidence only; the self-test has not yet been independently observed executing for this latest commit. Broader discovery may increase candidate counts; if configured review caps are exceeded, the scan now reports BLOCKED rather than claiming complete coverage.
