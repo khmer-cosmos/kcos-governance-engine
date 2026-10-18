@@ -131,3 +131,18 @@ Correction committed to the draft branch:
 - Commit: `e6e74fb7c5fe047282bf0810b03d12df1a827f88` — validate the tree SHA shape and add self-test coverage for valid and missing tree SHA data.
 
 This was a potentially scan-blocking defect; it is now corrected in the candidate implementation. The corresponding GitHub Actions PR checks have been queued/in progress, and the full scheduled/manual scan has still not been demonstrated. Do not mark the inventory workflow operationally accepted until the new self-test passes and a complete scan produces artifacts and updates the tracking issue.
+
+
+## 9. Fail-closed completeness correction — 2026-10-19
+
+A further code review found that candidate blobs skipped by the configured maximum blob-size limit were recorded in a repository-local error list, but did not increment the scan-wide error list. That could allow the top-level `complete` flag to remain true even though a discovered candidate had not been inspected.
+
+Correction committed to the draft branch:
+- Commit: `5f80a1406d94256289672e2f6ccc6f36ef553db1`
+- Blob SHA after read-back: `def6c038c1e611c012e1c85284b67020851ad7e3`
+- A skipped/unreadable candidate now adds a scan-wide error and a `CANDIDATE_CONTENT_UNREADABLE` BLOCKED finding.
+- A truncated recursive tree now emits `GIT_TREE_TRUNCATED` BLOCKED.
+- Candidate review cap exhaustion now emits `CANDIDATE_REVIEW_CAP_REACHED` BLOCKED.
+- Post-write read-back confirmed all three finding markers and the scan-wide error path are present.
+
+This is source read-back evidence, not runtime acceptance. The offline self-test and full scheduled/manual scan still require execution evidence; do not infer a workflow PASS from the commit alone.
