@@ -206,3 +206,44 @@ The original 118-row table is intentionally retained as a reproducible snapshot 
 - [PR #8 — Open PR merge triage register](https://github.com/khmer-cosmos/kcos-governance-engine/pull/8)
 
 At this delta check, PR #8 remained Draft/Open, API `mergeable=true` with `mergeable_state=unstable`; two analysis checks were still in progress, with the two Read Gate runs and factory-governance check observed successful. Therefore PR #8 itself is not merge-ready.
+
+
+---
+
+## Reconciliation addendum — 2026-10-27T08:00+07:00
+
+This addendum supersedes the opening count figures above for current triage decisions. The original table is retained as the earlier capture; its row-level inventory has **not yet been reconciled** to the later live search, so do not treat the old row set as a complete current inventory.
+
+- Latest observed live count: **119 open PRs in `khmer-cosmos` + 1 open PR in `ahlis0201-ui/kcos-frontend-a11y-demo` = 120**.
+- Draft count at latest observed snapshot: **12 org Drafts + 1 external frontend Draft = 13**.
+- This is still a snapshot, not proof that all 120 PRs have received full diff, review, base/head, dependency, and gate verification.
+- Do not bulk-merge or infer readiness from `mergeable=true`; exact-head checks, required reviews, branch ancestry, SSOT authority and owner disposition must be separately established.
+
+### Freshly re-fetched failed-job evidence
+
+| Repository / PR | Evidence refreshed | Confirmed failure | Disposition |
+|---|---|---|---|
+| HOVOD #9 | Job 114192033736 | Docker cannot pull `quay.io/minio/minio:latest`; unauthorized (exit 125) before HOVOD container starts | Blocked. Verify current supported image source and immutable tag/digest before changing the workflow; no image replacement guessed. |
+| HOVOD #8 | Job 113756537728 | Static migration/schema audit: 92 passed, 9 failed. Missing migration/schema declaration coverage for `events`, `events_dlq`, `publications`, `publish_decisions`, `follows`, `blocks`, `likes`, `collects`, `comm_identities`. | Blocked. Reconcile actual schema and migration history first; do not add tables or alter migrations based only on assertion names. |
+| HOVOD #8 | Job 113757555202 | Docker pull denied for `minio/minio:latest`; repository unavailable or requires authentication (exit 125) | Blocked. Same image-source verification requirement as above. |
+| HOVOD #2 | Job 108624277813 | API docs gate flags undocumented `POST /v1/auth/otp/request`, `/v1/auth/otp/resend`, and `/v1/auth/otp/verify` | Blocked. Compare actual route contract with authoritative API docs; then update docs or route policy, not both speculatively. |
+| HOVOD #2 | Job 108624645841 | Docker pull denied for `minio/minio:latest` | Blocked. Image-source issue repeats across PRs; treat as shared CI fixture root-cause candidate. |
+| concat-studio #18 | Job 108930023537 | Node syntax error at `scripts/host-tunnel-diagnosis.mjs:80`: single-quoted JS string contains unescaped single quotes around PowerShell URL | Blocked. Root cause is confirmed, but current source branch file retrieval did not succeed in this pass; no patch was applied. Re-open the exact branch/file and patch only that quoting expression, then rerun the targeted test. |
+
+### Current exact PR status recheck
+
+- `khmer-cosmos/kcos-governance-engine#5` and `#7`: remain Draft and blocked despite the previously observed 6/6 exact-head checks. Checks do not supply Owner authority, missing registries/schema, lifecycle approval, or independent review.
+- `khmer-cosmos/kcos-governance-engine#8`: open and marked ready for review; latest exact-head checks previously observed 6/6 successful. Not merged.
+- `khmer-cosmos/HOVOD#8` and `#9`: remain Draft and blocked by the confirmed failures above.
+- `khmer-cosmos/concat-studio#18`: remains Draft and non-mergeable in the latest PR metadata snapshot.
+
+### Immediate ordering
+
+1. **Shared CI fixture investigation:** identify an authoritative, currently pullable MinIO-compatible test image and immutable version/digest; verify policy and compatibility before one controlled PR-branch change. Do not select `latest` by default.
+2. **HOVOD migration/schema:** inspect schema declarations and migration files for the nine named tables, map ownership and intended migrations, then propose the smallest consistency fix on the owning PR branch.
+3. **HOVOD route documentation:** confirm OTP routes are intended public API; reconcile route source, API specification and gate inventory.
+4. **concat-studio #18:** repair the confirmed quote syntax only after the branch/file is retrievable and exact HEAD is revalidated.
+5. **KLOS stack:** keep #172/#173 coupled until their shared 196-path overlap and ancestry are resolved; do not merge either independently based only on green checks. #230's Base64 YAML defect was corrected on its PR branch, but its checks remain failing and root cause is not established.
+6. **SSOT candidates #5/#7:** remain blocked pending canonical authority, registries/schema/enums, effective gate mapping, independent review, Owner lifecycle decisions and consumer receipt requirements.
+
+No PR was merged by this reconciliation. No SSOT candidate was approved, frozen, or published.
