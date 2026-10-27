@@ -195,3 +195,14 @@ The following status details were retrieved after the inventory snapshot. These 
 4. **Ecosystem quality baseline:** `khmercos.com` PR #4 remains downstream of the same SSOT blockers.
 
 No PR in this priority set is designated MERGE-READY. The API's `mergeable=clean` is only a conflict-status signal; it is not CI, review, Owner approval, or gate acceptance.
+
+
+## Snapshot delta after opening the governance workstream PRs
+
+The 118-row inventory above is the initial capture, taken before the matrix candidate PR #7 and this triage-register PR #8 were opened. A fresh organization-level open-PR search then returned **119 open PRs in `khmer-cosmos`**; adding the separate frontend baseline PR #1 gives **120 currently observed open PRs across the combined scope** at the time of this delta check.
+
+The original 118-row table is intentionally retained as a reproducible snapshot and does not pretend to be a continuously refreshed live list. The two new governance PRs are tracked separately:
+- [PR #7 — Artifact Quality Gate Matrix candidate](https://github.com/khmer-cosmos/kcos-governance-engine/pull/7)
+- [PR #8 — Open PR merge triage register](https://github.com/khmer-cosmos/kcos-governance-engine/pull/8)
+
+At this delta check, PR #8 remained Draft/Open, API `mergeable=true` with `mergeable_state=unstable`; two analysis checks were still in progress, with the two Read Gate runs and factory-governance check observed successful. Therefore PR #8 itself is not merge-ready.
