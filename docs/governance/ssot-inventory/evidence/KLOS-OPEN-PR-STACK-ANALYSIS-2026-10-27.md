@@ -62,3 +62,13 @@ A bounded correction was made on PR #230's existing non-main branch only:
 The new exact-head checks were queued at the time of inspection. This corrects the observed file encoding defect, but does not establish that PR #230 passes validation, Read Gate, or mechanical gate. The base is still the older SHA `a1aa299b86fd71974b14778c6c5e16ef7d01ec2f`, while current `main` was observed at `930506fc024eb23b5e153392976709bb326181bd`; after checks finish, refresh/reconcile the base under the approved workflow and rerun evidence.
 
 No main branch or production runtime was changed by this repair.
+### KHM-010 post-repair result
+
+After the Base64-to-YAML correction, the exact-head check suite on `b14a14f87c5f8c4c56796c2650f939aac667c017` still reported failures in `factory-governance`, `validation`, `mechanical-gate`, and `KCOS-READ-GATE-001`. The new workflow-job log endpoints returned `BlobNotFound`; job metadata exposed no failed step summaries. Therefore the encoding defect is corrected, but it is **not** sufficient to pass the PR and no additional fix should be guessed without usable failure evidence. PR #230 remains BLOCKED.
+
+## KHM-010 disposition update
+
+- File-format defect: corrected and blob-verified on the PR branch.
+- CI/Read Gate/mechanical gate: still failing on the new head; detailed logs unavailable.
+- Base SHA: still older than current main.
+- Merge status: **BLOCKED** pending recoverable failure evidence, correction, full checks, and base reconciliation.
