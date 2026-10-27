@@ -72,3 +72,25 @@ After the Base64-to-YAML correction, the exact-head check suite on `b14a14f87c5f
 - CI/Read Gate/mechanical gate: still failing on the new head; detailed logs unavailable.
 - Base SHA: still older than current main.
 - Merge status: **BLOCKED** pending recoverable failure evidence, correction, full checks, and base reconciliation.
+
+## Recheck — 2026-10-27T08:00+07:00
+
+The post-correction head of KLOS PR #230 is `b14a14f87c5f8c4c56796c2650f939aac667c017`. Fresh workflow runs are complete and all four gate jobs still fail:
+
+| Workflow / gate | Run ID | Job ID | Result |
+|---|---:|---:|---|
+| mother-repo-validation | 40434890262 | 121961101036 | failure |
+| Factory Governance Gate | 40434890421 | 121961101533 | failure |
+| KCOS Read Gate | 40434890242 | 121961100794 | failure |
+| KCOS Khmer Language OS — Integration Gate | 40434890265 | 121961100814 | failure |
+
+Fresh log retrieval was attempted for all four job IDs; each returned Azure `BlobNotFound`. This confirms the failure state but does not expose the failure causes. No further code change is justified without a reproducible local run, downloadable artifact, or alternative check output. The YAML encoding correction remains a verified narrow fix, not a gate pass.
+
+### KLOS merge queue — current disposition
+
+- **Queue class A — resolve overlap before either merge:** PR #172 and #173. Their 196 shared paths and old common base require an ancestry/tree reconciliation decision and a single integrated validation sequence.
+- **Queue class B — root PRs requiring base refresh before review:** PR #60 and #178 target `main` from stale base SHAs; refresh only after recording the exact current main SHA and confirming no dependent stack assumes the old base.
+- **Queue class C — blocked quality roots:** PR #229 (5/5 checks failed), #230 (4/4 gate jobs failed after the encoding fix), #231 (5/5 checks failed). Root-cause evidence must be recovered; do not infer causes from titles or shared batch numbering.
+- **Queue class D — dependent branch stacks:** 65 non-main-base PRs, 63 whose base refs match another open PR head. Keep parent/child relationships intact; validate in topological order after each parent decision. Do not retarget children directly to main merely to make the queue look mergeable.
+
+The queue is a **review and repair order**, not merge authorization. Required review, exact-head green checks, current-base reconciliation, owner disposition, and applicable SSOT gates remain mandatory.
