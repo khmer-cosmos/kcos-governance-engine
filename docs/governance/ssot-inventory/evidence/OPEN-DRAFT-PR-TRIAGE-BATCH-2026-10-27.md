@@ -42,3 +42,38 @@
 ## Authority and evidence limitations
 
 The connected GitHub API provided exact-head check-run results and PR metadata, but this batch did not yet fetch full failing logs, every PR diff, all review threads, or all dependency edges. REVIEW REQUIRED items are not merge-ready. This is a first-pass Draft queue, not a complete review of all 120 open PRs.
+
+## Failure-log root-cause evidence (bounded)
+
+The following failed-job logs were inspected. These are observed failure points; they do not yet prove the final remediation.
+
+### HOVOD #9 — MinIO smoke setup
+
+- Failed job: [Smoke test (all-in-one + MinIO)](https://github.com/khmer-cosmos/HOVOD/actions/runs/38044666822/job/114192033736)
+- The workflow attempted to start `quay.io/minio/minio:latest`.
+- Docker returned: `unauthorized: access to the requested resource is not authorized`; the step exited 125 before the HOVOD container started.
+- Disposition: CI image-source/tag contract is invalid or inaccessible in this runner context. Verify the currently supported official MinIO image source and pin a known-good immutable tag/digest before changing the workflow. Do not label this as an application smoke-test defect.
+
+### HOVOD #8 — test/migration consistency plus MinIO smoke setup
+
+- Failed job: [Typecheck & build](https://github.com/khmer-cosmos/HOVOD/actions/runs/37911135587/job/113756537728)
+- The migration/schema test reported 92 passed and 9 failed. Failed assertions named `events`, `events_dlq`, `publications`, `publish_decisions`, `follows`, `blocks`, `likes`, `collects`, and `comm_identities`.
+- Failed smoke job: [Smoke test (all-in-one + MinIO)](https://github.com/khmer-cosmos/HOVOD/actions/runs/37911135587/job/113757555202)
+- The workflow attempted `minio/minio:latest`; Docker returned `pull access denied for minio/minio, repository does not exist or may require 'docker login'`, exit 125.
+- Disposition: two distinct blockers. The migration/schema contract needs source-level inspection to determine whether tables or migrations are missing/misaligned; the MinIO image source must be independently validated. Do not patch either based on test names alone.
+
+### HOVOD #2 — OTP integration docs gate plus MinIO smoke setup
+
+- Failed job: [Typecheck & build](https://github.com/khmer-cosmos/HOVOD/actions/runs/36320856016/job/108624277813)
+- The test run reported undocumented routes: `/v1/auth/otp/request`, `/v1/auth/otp/resend`, and `/v1/auth/otp/verify`; the docs gate exited 1.
+- Failed smoke job: [Smoke test (all-in-one + MinIO)](https://github.com/khmer-cosmos/HOVOD/actions/runs/36320856016/job/108624645841)
+- The workflow again attempted `minio/minio:latest` and Docker rejected the pull (repository does not exist or requires login), exit 125.
+- Disposition: document the three OTP routes in the canonical route/API inventory if they are in fact part of the authorized contract; first compare implementation, auth/rate-limit behavior, and route docs. Separately validate and pin the MinIO test image.
+
+### concat-studio #18 — preflight contract syntax failure
+
+- Failed job: [preflight-contract](https://github.com/khmer-cosmos/concat-studio/actions/runs/36422990528/job/108930023537)
+- Node failed to parse `scripts/host-tunnel-diagnosis.test.mjs` with `SyntaxError: Unexpected string`, at a test fixture containing PowerShell command text around the HTTP status handling.
+- Disposition: inspect the exact file patch and quote/escape boundary, add a syntax-only check and focused test, and rerun both preflight-contract jobs. A base conflict is a separate blocker; do not merge until both conflict and test failures are resolved.
+
+No source files in HOVOD or concat-studio were changed during this diagnosis.
