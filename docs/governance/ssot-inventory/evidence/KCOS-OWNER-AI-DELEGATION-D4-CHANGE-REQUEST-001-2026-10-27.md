@@ -81,10 +81,10 @@ Until that separate gate passes, Owner signature fields remain `PENDING HUMAN SI
 
 ```yaml
 request_id: KCOS-OWNER-AI-DELEGATION-D4-CR-001
- decision_class: D4
+decision_class: D4
 status: AUTHORITY_PENDING
-requester_approval_received: true
-requester_approval_scope: execute_the_preparatory_workflow_only
+preparatory_execution_authorized: true
+preparatory_execution_scope: execute_research_drafting_and_evidence_work_only
 appointing_authority: PENDING_VERIFICATION
 current_owner_of_record: PENDING_VERIFICATION
 selected_option: PENDING_AUTHORIZED_HUMAN_DECISION
@@ -100,7 +100,7 @@ effective_from: null
 expires_at: null
 ```
 
-The schema above is a proposal only. Do not append it to an authoritative ACTIVE registry as an authorized decision until the applicable schema is verified and the authorized authority signs the decision. Correct the indentation of `decision_class` if materializing it into YAML; this illustrative block is not a validator-ready registry record.
+The schema above is a proposal only, not a validator-ready registry record. Do not append it to an authoritative ACTIVE registry as an authorized decision until the applicable schema is verified and the authorized authority signs the decision.
 
 ## 8. Activation sequence after authorized decision
 
