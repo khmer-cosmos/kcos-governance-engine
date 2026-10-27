@@ -1,0 +1,52 @@
+# KLOS Open PR Stack and Merge-Order Analysis — 2026-10-27
+
+**Repository:** `khmer-cosmos/KCOS-Khmer-Language-OS`
+**Current main SHA observed:** `930506fc024eb23b5e153392976709bb326181bd`
+**Open PR snapshot:** 72 PRs; 0 Draft; 69 last updated in September 2026, 3 last updated in October 2026.
+**Boundary:** Metadata/dependency/check snapshot only. No PR merged, rebased, closed, or edited.
+
+## 1. Stack structure
+
+- 7 of 72 open PRs target `main` directly.
+- 65 of 72 use a non-main base branch.
+- 63 of those 65 non-main base references match the head branch of another currently open PR; they are explicit stacked dependencies, not independent mainline PRs.
+- The remaining 2 use base branch `t21-social-public-source-adapter`, which maps to already merged PR #129; this is a closed/merged parent, not an unresolved open parent.
+- Branch families include stage-02 → stage-03 → stage-04, T25/T30/T36/T39/T42/T45/T48/T51/T54/T57 gate stages, and T58–T63 siblings. A topological merge order is required; arbitrary bulk merge is unsafe.
+
+## 2. Main-target root PRs and exact-head checks
+
+| PR | Head branch | Base SHA observed | Changed files | Exact-head checks | Initial disposition |
+|---|---|---|---:|---|---|
+| [#60 — validate release gate after export fixture fix](https://github.com/khmer-cosmos/KCOS-Khmer-Language-OS/pull/60) | `kcos-language-os-v0.1-foundation` | `101f55bb2855745c837ca98904cf5ce8509e689f` | 150 | 2/2 success | **BLOCKED for merge review** — base is stale versus current main; large foundational diff; no requested reviewers/review comments observed; validate current branch/stack semantics before disposition |
+| [#172 — T64 release admission integration](https://github.com/khmer-cosmos/KCOS-Khmer-Language-OS/pull/172) | `t64-release-admission-integration` | `101f55bb2855745c837ca98904cf5ce8509e689f` | 198 | 1 failure | **BLOCKED** — failing test and overlapping 198-file stack; no review evidence observed |
+| [#173 — T65 final evidence bundle](https://github.com/khmer-cosmos/KCOS-Khmer-Language-OS/pull/173) | `t65-final-evidence-bundle` | `101f55bb2855745c837ca98904cf5ce8509e689f` | 198 | 1 success | **BLOCKED for merge review** — shares 196 changed paths with #172 but has two different unique paths; must resolve whether these are sibling/alternative integration branches before merging either or both |
+| [#178 — map project engineering system to CDI Foundation](https://github.com/khmer-cosmos/KCOS-Khmer-Language-OS/pull/178) | `cdi/map-v0.1` | `101f55bb2855745c837ca98904cf5ce8509e689f` | 3 | No check runs returned | **BLOCKED / EVIDENCE** — verify exact-head checks and CDI integration contract before review |
+| [#229 — KHM-002 E2E runtime contract](https://github.com/khmer-cosmos/KCOS-Khmer-Language-OS/pull/229) | `construction/khm-002-architecture` | `dec611536a863bb934ef59248bc5106f8149cca3` | 2 | 5/5 failure | **BLOCKED** — Read Gate, mechanical gate and validation all failed; logs were not retrievable in this inspection (artifact log endpoint returned BlobNotFound) |
+| [#230 — KHM-010 E2E golden/negative corpus](https://github.com/khmer-cosmos/KCOS-Khmer-Language-OS/pull/230) | `construction/khm-010-quality` | `a1aa299b86fd71974b14778c6c5e16ef7d01ec2f` | 2 | 5/5 failure | **BLOCKED** — Read Gate, mechanical gate and validation all failed; logs were not retrievable in this inspection |
+| [#231 — KHM-007 OBS-2 source-ID migration](https://github.com/khmer-cosmos/KCOS-Khmer-Language-OS/pull/231) | `construction/khm-007-entity` | `a1aa299b86fd71974b14778c6c5e16ef7d01ec2f` | 10 | 5/5 failure | **BLOCKED** — Read Gate, mechanical gate and validation all failed; logs were not retrievable in this inspection |
+
+All seven root PRs use a base SHA older than the current main SHA observed above. The three October PRs #229–#231 are the most recently updated main-target PRs, but their exact-head checks are fully failing. A clean/unknown mergeability flag cannot override failed checks or stale base evidence.
+
+## 3. Shared diff risk: PR #172 versus #173
+
+Changed-file comparison observed:
+- PR #172: 198 changed paths.
+- PR #173: 198 changed paths.
+- 196 paths are common.
+- PR #172 unique paths: `src/kcos_language_os/release_admission_integration.py`, `tests/test_release_admission_integration.py`.
+- PR #173 unique paths: `docs/KCOS-FINAL-EVIDENCE-BUNDLE-001.md`, `tests/test_final_evidence_bundle.py`.
+
+This indicates two overlapping large diffs against the same old main base, not two small independent changes. Before either merge, compare commit ancestry and complete final trees, decide the intended integration sequence, refresh against current main, then rerun full tests. Do not merge both solely because one has a passing check.
+
+## 4. Recommended merge queue policy
+
+1. Treat each root branch and each dependent feature branch as a graph node. For every PR, record base branch, base SHA, head branch, head SHA, parent PR (if the base branch matches an open PR head), changed-path overlap, exact-head checks, review state, and current-main divergence.
+2. Refresh roots against current main in isolated branches; do not retarget a child PR to main before its parent content is integrated or intentionally superseded.
+3. Resolve the #172/#173 overlapping-stack decision before merging either.
+4. Diagnose and repair KHM-002/KHM-010/KHM-007 failures from exact logs; current log retrieval returned BlobNotFound, so the failure causes remain unknown.
+5. After each parent integration, re-evaluate direct children against the new base SHA and run their exact-head checks again.
+6. Require independent review and owner disposition; no merge is authorized by this report.
+
+## 5. Evidence limitations
+
+GitHub PR metadata and exact-head check-run summaries were available. Detailed workflow logs for #229–#231 could not be retrieved because the log endpoint returned BlobNotFound. This analysis does not yet inspect all 72 PR diffs, every check run, or every review thread; it establishes the dependency graph and identifies root-queue blockers for the next review batch.
