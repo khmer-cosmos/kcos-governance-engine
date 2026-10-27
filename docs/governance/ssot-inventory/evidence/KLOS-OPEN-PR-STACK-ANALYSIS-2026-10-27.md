@@ -50,3 +50,15 @@ This indicates two overlapping large diffs against the same old main base, not t
 ## 5. Evidence limitations
 
 GitHub PR metadata and exact-head check-run summaries were available. Detailed workflow logs for #229–#231 could not be retrieved because the log endpoint returned BlobNotFound. This analysis does not yet inspect all 72 PR diffs, every check run, or every review thread; it establishes the dependency graph and identifies root-queue blockers for the next review batch.
+## Follow-up repair — KHM-010 corpus file encoding
+
+After the initial snapshot, direct file inspection of KLOS PR #230 showed both new `.yaml` corpus files contained Base64 text instead of readable YAML. The first bytes decoded to the expected `# KHM-010 ...` YAML comments and included `corpus_id`/`cases` fields.
+
+A bounded correction was made on PR #230's existing non-main branch only:
+- `registry/quality/corpus/golden-e2e-v1.yaml`: decoded content now verified; new blob `28465ce128fafc730affef2ecffe5e673253b50a`.
+- `registry/quality/corpus/negative-e2e-v1.yaml`: decoded content now verified; new blob `09629fcffe7a2a8191b0b9dd93bc989080415fba`.
+- Latest commit after these two changes: `b14a14f87c5f8c4c56796c2650f939aac667c017`.
+
+The new exact-head checks were queued at the time of inspection. This corrects the observed file encoding defect, but does not establish that PR #230 passes validation, Read Gate, or mechanical gate. The base is still the older SHA `a1aa299b86fd71974b14778c6c5e16ef7d01ec2f`, while current `main` was observed at `930506fc024eb23b5e153392976709bb326181bd`; after checks finish, refresh/reconcile the base under the approved workflow and rerun evidence.
+
+No main branch or production runtime was changed by this repair.
