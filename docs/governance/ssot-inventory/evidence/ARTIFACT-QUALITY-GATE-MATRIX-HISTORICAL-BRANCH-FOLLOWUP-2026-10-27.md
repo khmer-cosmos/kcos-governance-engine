@@ -46,3 +46,22 @@ Next steps remain:
 4. Keep all dependent final quality-gate acceptance BLOCKED until the canonical dependency is validly resolved.
 
 No `main` branch changes, declaration migrations, gate passes, SSOT approval/freeze/publication, or production changes occurred.
+
+
+## 5. Further historical and archive-related branch checks
+
+Additional recursive-tree checks were completed for these `cdi-foundation` branch tips:
+
+- `construction/multidomain-inventory-archive-001` — `7f2bb90e657f91807e56037d6b8e4807c2722a22`
+- `construction/multidomain-inventory-archive-status-001` — `ca38ca26f3a364468437ac2996c53ac4087b7d61`
+- `construction/multidomain-inventory-archive-status-002` — `57633e529aa491017a49413a2da372512c507d4d`
+- `construction/multidomain-inventory-001` — `ffc6802de6bc9e9433419de4e87b4771f7375070`
+- `factory/qm-and-product-chain-full-construction-001` — `90371df80d7d4413596bc0f2a2af4d09a0365186`
+- `factory/governance-baseline-fix-v1` — `d496e28510770d2f25f952dae8233d560d6cc9e5`
+- `factory/independent-department-chains-001` — `94140ff1c6242f207fef33a730aae1e616e1b826`
+- `factory/chain-architecture-001` — `2b6a066f0999c2f229d7efde0090b89cb6793b32`
+- `factory/product-department-chain-admission-001` — `d72b429c44bbc1379d61a427642575336142b7c0`
+
+No exact path for `ARTIFACT-QUALITY-GATE-MATRIX-001` or a path matching the artifact-quality-gate-matrix name was found in these branch trees. The archive-related branches contain inventory archive indexes and quality-chain contracts, but no matching canonical matrix path. The QM/product-chain and independent-department-chain branches contain the same scoped QE chain contracts/registries, not an artifact-type-to-gate mapping.
+
+This is still a path-based tree search of selected branch tips, not exhaustive enumeration of every historical commit object or every possible external archive. No substitute was adopted.
