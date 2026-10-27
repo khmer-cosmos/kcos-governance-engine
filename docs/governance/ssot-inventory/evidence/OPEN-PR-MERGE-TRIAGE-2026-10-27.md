@@ -247,3 +247,15 @@ This addendum supersedes the opening count figures above for current triage deci
 6. **SSOT candidates #5/#7:** remain blocked pending canonical authority, registries/schema/enums, effective gate mapping, independent review, Owner lifecycle decisions and consumer receipt requirements.
 
 No PR was merged by this reconciliation. No SSOT candidate was approved, frozen, or published.
+
+
+### MinIO image-source research note — 2026-10-27
+
+External documentation is contradictory, so no image reference was changed:
+
+- MinIO's published container upgrade docs still use `quay.io/minio/minio:latest` and give a pinned historical tag example: https://min.io/docs/minio/container/operations/install-deploy-manage/upgrade-minio-deployment.html
+- Docker Hub's `minio/minio` page is marked archived and still contains older quick-start material: https://hub.docker.com/r/minio/minio
+- A Red Hat Customer Portal solution updated 2026-09-29 documents `quay.io/minio/minio` pull failures with `unauthorized`: https://access.redhat.com/solutions/7148629
+- The HOVOD CI logs independently reproduce the same unauthorized result from `quay.io/minio/minio:latest`.
+
+Therefore, changing `minio/minio:latest` to `quay.io/minio/minio:latest` is **not** a validated fix for this repository. Before changing the workflow, verify an image source that is actually pullable from a clean GitHub-hosted runner and compatible with the HOVOD test harness; prefer a project-controlled mirror or another explicitly approved S3-compatible test service if upstream MinIO community images cannot be reliably obtained. Pin the selected artifact by immutable digest after successful pull and compatibility validation. No production image or CI image reference was changed in this pass.
