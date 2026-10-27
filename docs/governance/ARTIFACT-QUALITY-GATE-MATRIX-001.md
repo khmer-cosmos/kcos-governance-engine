@@ -21,6 +21,12 @@ supersedes: null
 
 This matrix proposes the minimum quality-gate profile required for each artifact type T01–T12 defined by the companion candidate `ARTIFACT-CLASSIFICATION-001`.
 
+### 1.1 Companion candidate identity and dependency boundary
+
+The current companion candidate is [PR #5 — ARTIFACT-CLASSIFICATION-001](https://github.com/khmer-cosmos/kcos-governance-engine/pull/5), whose V0.1 document blob was observed as `6b1b87a46f7a985129d300a27063a9d141e15e75` during this review. That blob identifies the reviewed candidate text only; it does **not** establish approval, freeze, publication, or effective authority.
+
+The two standards remain separate candidate PRs. Before either can become effective, the Owner must approve the dependency relationship and the final frozen revisions must cite each other by immutable version identity. If either document changes, the pair must be cross-checked again. Until then, all profiles in this document are provisional and all dependent acceptance remains BLOCKED.
+
 It answers: **which classes of acceptance controls must be satisfied for an artifact of a given type, and what evidence/decision is required before the artifact may claim a particular outcome?**
 
 This matrix does not:
@@ -68,14 +74,16 @@ The following separation rules are mandatory for the eventual approved standard:
 
 Each profile MUST evaluate the following stage families when applicable. These stage labels are conceptual control groups, not permission to invent or bypass an existing product-specific gate.
 
-1. **G0 — Identity and authority:** artifact identity, type, owner, parent/scope, applicable contract and authorized work boundary.
-2. **G1 — Prerequisite readiness:** required SSOTs fully read, exact-version Read Receipts valid, dependencies resolved, no blocking ambiguity silently bypassed.
-3. **G2 — Construction/process conformance:** implementation or artifact production follows the approved contract, change controls, and authorized scope.
-4. **G3 — Technical verification:** type-specific positive, negative, regression, security, compatibility, data-quality, or operational checks.
-5. **G4 — Independent QA/QC/evidence review:** QA process assurance, QC artifact correctness, and evidence verification are separately recorded where required; production self-approval is not independent verification.
-6. **G5 — Integration and target-context acceptance:** applicable parent-product, platform, runtime, interface, and deployment-context controls.
-7. **G6 — Owner/gate disposition:** designated acceptor records PASS, BLOCK, or CONDITIONAL-PASS only under the governing gate contract; any conditional acceptance must name non-waivable boundaries, owner, deadline, and residual risk.
-8. **G7 — Freeze/release authorization:** where applicable, freeze, package identity/digest, release approval, and deployment authorization are separate from technical PASS.
+1. **AGM-CS0 — Identity and authority:** artifact identity, type, owner, parent/scope, applicable contract and authorized work boundary.
+2. **AGM-CS1 — Prerequisite readiness:** required SSOTs fully read, exact-version Read Receipts valid, dependencies resolved, no blocking ambiguity silently bypassed.
+3. **AGM-CS2 — Construction/process conformance:** implementation or artifact production follows the approved contract, change controls, and authorized scope.
+4. **AGM-CS3 — Technical verification:** type-specific positive, negative, regression, security, compatibility, data-quality, or operational checks.
+5. **AGM-CS4 — Independent QA/QC/evidence review:** QA process assurance, QC artifact correctness, and evidence verification are separately recorded where required; production self-approval is not independent verification.
+6. **AGM-CS5 — Integration and target-context acceptance:** applicable parent-product, platform, runtime, interface, and deployment-context controls.
+7. **AGM-CS6 — Owner/gate disposition:** designated acceptor records PASS, BLOCK, or CONDITIONAL-PASS only under the governing gate contract; any conditional acceptance must name non-waivable boundaries, owner, deadline, and residual risk.
+8. **AGM-CS7 — Freeze/release authorization:** where applicable, freeze, package identity/digest, release approval, and deployment authorization are separate from technical PASS.
+
+The `AGM-CS0`–`AGM-CS7` labels are this candidate's internal control-stage identifiers. They are **not** aliases for any existing KCOS or CDI G0–G9 gate and do not change those gates' semantics. The final approved matrix must cross-reference each applicable existing gate by canonical ID/version and record precedence or additive controls.
 
 A profile MAY omit a stage only through an explicit, evidence-backed NOT_APPLICABLE rule permitted by the governing contract. Missing evidence is not a valid reason for omission.
 
@@ -134,7 +142,8 @@ This candidate does not authorize mass declaration migration. Before adoption:
 ## 9. Open decisions before approval
 
 - Confirm accountable owner and canonical location.
-- Confirm whether profile identifiers in §3 are accepted or must map to existing canonical gate IDs.
+- Confirm whether profile identifiers in §3 are accepted or must map to existing canonical gate IDs; map each profile to canonical gate ID/version and record precedence or additive controls.
+- Confirm and freeze the immutable dependency link to the exact approved ARTIFACT-CLASSIFICATION-001 revision; rerun cross-review if either candidate changes.
 - Confirm applicability/waiver authority and whether CONDITIONAL-PASS is allowed for each type.
 - Confirm product/scope registry and owner registry.
 - Confirm maturity/production-status enums and machine-readable declaration schema.
